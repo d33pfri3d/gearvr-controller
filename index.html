@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>GearVR-controller.js</title>
+	</head>
+	<body>
+
+		<h1>GearVR-controller.js</h1>
+		<button id="button">CONNECT</button><span id="message"></span><br /><br />
+		<textarea id="textarea" rows="23" cols="50"></textarea>
+
+		<script>
+			if ( 'bluetooth' in navigator === false ) {
+				button.style.display = 'none';
+				message.textContent = 'This browser doesn\'t support the Web Bluetooth API :(';
+			}
+
+			button.addEventListener( 'click', function () {
+				var controller = new GearVrController();
+				controller.connect();
+			});
+			
+			function GearVrController(){
+				function connect() {
+
+					console.log('Requesting GearVR Controller...')
+
+					return navigator.bluetooth.requestDevice( {
+						filters: [ { 'namePrefix': ['Gear VR'] }],
+						optionalServices: [ 'generic_access' ]
+					})
+					.then( function ( device ) {
+						console.log('Got device: ' + device.name);
+						return device.gatt.connect();
+					})
+					.then( function ( server ) {
+						console.dir('Got server: ' + server);
+						return server.getPrimaryService( 'generic_access' );
+					})
+					.then( function ( service ) {
+						return service.getCharacteristic( '22bb746f-2ba1-7554-2d6f-726568705327' );
+					})
+					.then( function ( characteristic ) {
+						characteristic.addEventListener( 'characteristicvaluechanged', handleData );
+						return characteristic.startNotifications();
+					})
+
+					}
+				function handleData( event ) {
+					var data = event.target.value;
+					console.log(event);
+				}
+
+				return {
+					connect: connect
+				}
+
+			}
+
+		</script>
+	</body>
+</html>
